@@ -76,10 +76,10 @@ func main() {
 	go func() {
 		for d := range msgs {
 			log.Printf("Received message: %s", d.Body)
-			
+
 			// Simulate some work
 			time.Sleep(2 * time.Second)
-			
+
 			// Acknowledge the message
 			d.Ack(false)
 			log.Printf("Message processed and acknowledged")

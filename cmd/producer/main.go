@@ -49,7 +49,7 @@ func main() {
 	// Produce messages
 	for i := 1; ; i++ {
 		message := fmt.Sprintf("Hello from producer! Message #%d", i)
-		
+
 		err = ch.Publish(
 			"",     // exchange
 			q.Name, // routing key
@@ -61,7 +61,7 @@ func main() {
 				DeliveryMode: amqp.Persistent, // make message persistent
 			},
 		)
-		
+
 		if err != nil {
 			log.Printf("Failed to publish a message: %v", err)
 		} else {
