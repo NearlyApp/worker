@@ -3,12 +3,13 @@ import pika
 import json
 import time
 import os
+import logging
 from datetime import datetime, timezone
-from typing import Dict, Any
 from utils.logger import setup_logging
 from utils.rabbitmq import connect_rabbitmq, setup_queue, close_connection
+from utils.types import GreetingMessage, MessageTypes
 
-def send_message(channel, logger, queue_name: str, message: Dict[Any, Any]):
+def send_message(channel: pika.channel.Channel, logger: logging.Logger, queue_name: str, message: GreetingMessage) -> None:
     """Send a message to the queue"""
     try:
         message_json = json.dumps(message)
@@ -45,11 +46,11 @@ def main():
         
         while True:
             current_time = datetime.now(timezone.utc)
-            message = {
+            message: GreetingMessage = {
                 'id': message_count,
                 'content': f'Hello from Producer! Message #{message_count}',
                 'timestamp': current_time.isoformat(),
-                'type': 'greeting',
+                'type': MessageTypes.GREETING,
                 'producer_uptime': str(current_time - start_time),
                 'hostname': os.getenv('HOSTNAME', 'unknown')
             }
