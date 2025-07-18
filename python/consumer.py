@@ -1,43 +1,10 @@
 #!/usr/bin/env python3
-import pika
 import json
 import time
 import os
-import sys
 from datetime import datetime, timezone
 from utils.logger import setup_logging, get_logger
-
-def connect_rabbitmq(logger):
-    """Connect to RabbitMQ with retry logic"""
-    rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://admin:admin@localhost:5672/')
-    
-    max_retries = 30
-    retry_delay = 2
-    
-    logger.info(f"🔗 Connecting to RabbitMQ at {rabbitmq_url}")
-    
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"🔄 Connection attempt {attempt + 1}/{max_retries}")
-            connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
-            channel = connection.channel()
-            logger.info("✅ Successfully connected to RabbitMQ")
-            return connection, channel
-        except Exception as e:
-            logger.error(f"❌ Connection failed: {e}")
-            if attempt < max_retries - 1:
-                logger.info(f"⏳ Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                logger.critical("❌ Max retries reached. Exiting.")
-                sys.exit(1)
-
-def setup_queue(channel, logger, queue_name='task_queue'):
-    """Declare a durable queue"""
-    logger.info(f"📋 Setting up queue: {queue_name}")
-    channel.queue_declare(queue=queue_name, durable=True)
-    logger.info(f"✅ Queue '{queue_name}' is ready")
-    return queue_name
+from utils.rabbitmq import connect_rabbitmq, setup_queue, setup_consumer_qos, close_connection
 
 def process_message(body: bytes, logger) -> bool:
     """Process the received message"""
@@ -104,8 +71,7 @@ def main():
     queue_name = setup_queue(channel, logger)
     
     # Set QoS to process one message at a time
-    channel.basic_qos(prefetch_count=1)
-    logger.info("⚙️  QoS set to prefetch_count=1 (fair dispatch)")
+    setup_consumer_qos(channel, logger, prefetch_count=1)
     
     # Setup consumer
     channel.basic_consume(queue=queue_name, on_message_callback=callback)
@@ -123,10 +89,7 @@ def main():
         logger.error(f"❌ Unexpected error: {e}")
         raise
     finally:
-        if connection and not connection.is_closed:
-            connection.close()
-            uptime = datetime.now(timezone.utc) - start_time
-            logger.info(f"🔌 Connection closed gracefully | Uptime: {uptime}")
+        close_connection(connection, logger, start_time)
 
 if __name__ == '__main__':
     main()

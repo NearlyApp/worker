@@ -3,42 +3,10 @@ import pika
 import json
 import time
 import os
-import sys
 from datetime import datetime, timezone
 from typing import Dict, Any
 from utils.logger import setup_logging
-
-def connect_rabbitmq(logger):
-    """Connect to RabbitMQ with retry logic"""
-    rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://admin:admin@localhost:5672/')
-    
-    max_retries = 30
-    retry_delay = 2
-    
-    logger.info(f"🔗 Connecting to RabbitMQ at {rabbitmq_url}")
-    
-    for attempt in range(max_retries):
-        try:
-            logger.info(f"🔄 Connection attempt {attempt + 1}/{max_retries}")
-            connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
-            channel = connection.channel()
-            logger.info("✅ Successfully connected to RabbitMQ")
-            return connection, channel
-        except Exception as e:
-            logger.error(f"❌ Connection failed: {e}")
-            if attempt < max_retries - 1:
-                logger.info(f"⏳ Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                logger.critical("❌ Max retries reached. Exiting.")
-                sys.exit(1)
-
-def setup_queue(channel, logger, queue_name='task_queue'):
-    """Declare a durable queue"""
-    logger.info(f"📋 Setting up queue: {queue_name}")
-    channel.queue_declare(queue=queue_name, durable=True)
-    logger.info(f"✅ Queue '{queue_name}' is ready")
-    return queue_name
+from utils.rabbitmq import connect_rabbitmq, setup_queue, close_connection
 
 def send_message(channel, logger, queue_name: str, message: Dict[Any, Any]):
     """Send a message to the queue"""
@@ -101,9 +69,7 @@ def main():
         logger.error(f"❌ Unexpected error: {e}")
         raise
     finally:
-        if connection and not connection.is_closed:
-            connection.close()
-            logger.info("🔌 Connection closed gracefully")
+        close_connection(connection, logger)
 
 if __name__ == '__main__':
     main()
