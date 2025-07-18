@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY consumer.py .
 
 # Copy the logger module
-COPY lib/logger.py lib/logger.py
+COPY utils/logger.py utils/logger.py
 
 # Make the script executable
 RUN chmod +x consumer.py

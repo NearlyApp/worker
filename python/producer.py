@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from typing import Dict, Any
-from lib.logger import setup_logging
+from utils.logger import setup_logging
 
 def connect_rabbitmq(logger):
     """Connect to RabbitMQ with retry logic"""

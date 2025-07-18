@@ -5,7 +5,7 @@ import time
 import os
 import sys
 from datetime import datetime, timezone
-from lib.logger import setup_logging, get_logger
+from utils.logger import setup_logging, get_logger
 
 def connect_rabbitmq(logger):
     """Connect to RabbitMQ with retry logic"""
