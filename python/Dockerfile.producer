@@ -9,6 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the producer script
 COPY producer.py .
 
+# Copy the logger module
+COPY lib/logger.py lib/logger.py
+
 # Make the script executable
 RUN chmod +x producer.py
 

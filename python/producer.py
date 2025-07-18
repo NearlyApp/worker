@@ -4,35 +4,9 @@ import json
 import time
 import os
 import sys
-import logging
 from datetime import datetime, timezone
 from typing import Dict, Any
-
-def setup_logging():
-    """Setup structured logging with timestamps"""
-    # Get log level from environment variable, default to INFO
-    log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
-    
-    # Map string to logging level
-    log_levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    
-    log_level = log_levels.get(log_level_str, logging.INFO)
-    
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s | %(levelname)8s | %(name)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    logger = logging.getLogger('producer')
-    logger.info(f"🔧 Log level set to: {log_level_str}")
-    return logger
+from lib.logger import setup_logging
 
 def connect_rabbitmq(logger):
     """Connect to RabbitMQ with retry logic"""
@@ -85,7 +59,7 @@ def send_message(channel, logger, queue_name: str, message: Dict[Any, Any]):
         raise
 
 def main():
-    logger = setup_logging()
+    logger = setup_logging('producer')
     logger.info("🚀 Starting Producer...")
     logger.info(f"🌍 Environment: RABBITMQ_URL={os.getenv('RABBITMQ_URL', 'default')}")
     

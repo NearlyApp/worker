@@ -4,35 +4,8 @@ import json
 import time
 import os
 import sys
-import logging
 from datetime import datetime, timezone
-from typing import Dict, Any
-
-def setup_logging():
-    """Setup structured logging with timestamps"""
-    # Get log level from environment variable, default to INFO
-    log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
-    
-    # Map string to logging level
-    log_levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    
-    log_level = log_levels.get(log_level_str, logging.INFO)
-    
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)s | %(levelname)8s | %(name)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    logger = logging.getLogger('consumer')
-    logger.info(f"🔧 Log level set to: {log_level_str}")
-    return logger
+from lib.logger import setup_logging, get_logger
 
 def connect_rabbitmq(logger):
     """Connect to RabbitMQ with retry logic"""
@@ -100,7 +73,7 @@ def process_message(body: bytes, logger) -> bool:
 
 def callback(ch, method, properties, body):
     """Callback function for processing messages"""
-    logger = logging.getLogger('consumer')
+    logger = get_logger('consumer')
     receive_time = datetime.now(timezone.utc)
     logger.info(f"📨 Received message at {receive_time.isoformat()}")
     
@@ -119,7 +92,7 @@ def callback(ch, method, properties, body):
         logger.warning(f"❌ Message rejected and requeued | Processing time: {processing_duration:.2f}s")
 
 def main():
-    logger = setup_logging()
+    logger = setup_logging('consumer')
     logger.info("🎯 Starting Consumer...")
     logger.info(f"🌍 Environment: RABBITMQ_URL={os.getenv('RABBITMQ_URL', 'default')}")
     logger.info(f"🏠 Hostname: {os.getenv('HOSTNAME', 'unknown')}")
