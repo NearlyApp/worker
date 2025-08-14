@@ -53,7 +53,7 @@ def connect_rabbitmq(logger: logging.Logger,
 
 def setup_queue(channel: pika.channel.Channel, 
                logger: logging.Logger, 
-               queue_name: str = 'task_queue',
+               queue_name: str = 'embedding_input',
                durable: bool = True) -> str:
     """
     Declare a queue with specified options.

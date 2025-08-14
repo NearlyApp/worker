@@ -84,13 +84,13 @@ make run-consumer
 
 1. **Producer** (`producer.py`):
    - Connects to RabbitMQ
-   - Sends messages to a queue named `task_queue` every 5 seconds
-   - Messages include ID, content, timestamp, and type
+   - Sends embedding input messages to a queue named `embedding_input` every 2 seconds
+   - Message fields: id, text, timestamp (epoch seconds) plus optional metadata
 
 2. **Consumer** (`consumer.py`):
    - Connects to RabbitMQ
-   - Listens for messages on the `task_queue`
-   - Processes each message (simulates 2 seconds of work)
+   - Listens for messages on the `embedding_input` queue
+   - Simulates embedding generation (mock latency based on text length)
    - Acknowledges successful processing
 
 3. **Queue Configuration**:
@@ -100,12 +100,16 @@ make run-consumer
 
 ## Message Format
 
-```json
+```jsonc
 {
-  "id": 1,
-  "content": "Hello from Producer! Message #1",
-  "timestamp": "2025-07-17T10:30:00.123456",
-  "type": "greeting"
+   "id": 1,                // string or number identifier
+   "text": "Text to embed", // raw text
+   "timestamp": 1723629000,  // epoch seconds when produced
+   "source": "demo-producer", // optional
+   "trace_id": "trace-1",     // optional
+   "metadata": {               // optional arbitrary metadata
+      "lang": "en"
+   }
 }
 ```
 

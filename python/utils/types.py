@@ -1,81 +1,39 @@
 #!/usr/bin/env python3
-"""
-Type definitions for RabbitMQ worker applications.
-"""
-from typing import TypedDict, Optional, Any
-from datetime import datetime
+"""Type definitions for embedding input worker."""
+from typing import TypedDict, Any, Optional, Union
 
 
-class WorkerMessage(TypedDict):
+class EmbeddingInputRequired(TypedDict):
+    """Required fields for an embedding input message."""
+    id: Union[int, str]
+    text: str
+    timestamp: int  # Unix epoch seconds (producer side)
+
+
+class EmbeddingInputMessage(EmbeddingInputRequired, total=False):
     """
-    Standard message format for worker communication.
-    
-    All messages sent between producers and consumers should follow this structure.
+    Full embedding input message.
+    Additional arbitrary fields are allowed (metadata, source, etc.).
+    Example:
+        {
+            "id": 123,
+            "text": "Some text to embed",
+            "timestamp": 1723632000,
+            "source": "ingestion-job-7",
+            "metadata": {"lang": "en"}
+        }
     """
-    id: int
-    content: str
-    timestamp: str  # ISO format string
-    type: str
-    producer_uptime: Optional[str]
-    hostname: Optional[str]
+    metadata: Any
+    source: str
+    trace_id: str
+    # Add other optional fields as needed
 
 
-class GreetingMessage(WorkerMessage):
-    """
-    Specific message type for greeting messages.
-    Extends the base WorkerMessage with greeting-specific fields.
-    """
-    type: str  # Should always be 'greeting'
+ProcessedEmbedding = TypedDict('ProcessedEmbedding', {
+    'id': Union[int, str],
+    'vector_dim': int,
+    'processing_duration': float,
+    'ok': bool,
+    'error': Optional[str],
+})
 
-
-class TaskMessage(WorkerMessage):
-    """
-    Specific message type for task messages.
-    Extends the base WorkerMessage with task-specific fields.
-    """
-    type: str  # Should always be 'task'
-    priority: Optional[int]
-    retry_count: Optional[int]
-    max_retries: Optional[int]
-
-
-class MessageEnvelope(TypedDict):
-    """
-    Envelope containing message metadata and payload.
-    Used for internal processing and logging.
-    """
-    message: WorkerMessage
-    received_at: datetime
-    processing_started_at: Optional[datetime]
-    processing_completed_at: Optional[datetime]
-    processing_duration: Optional[float]
-    success: Optional[bool]
-    error: Optional[str]
-
-
-# Message type constants
-class MessageTypes:
-    """Constants for message types."""
-    GREETING = "greeting"
-    TASK = "task"
-    HEARTBEAT = "heartbeat"
-    STATUS = "status"
-    ERROR = "error"
-
-
-# Queue configuration types
-class QueueConfig(TypedDict):
-    """Configuration for queue setup."""
-    name: str
-    durable: bool
-    exclusive: bool
-    auto_delete: bool
-
-
-class ConnectionConfig(TypedDict):
-    """Configuration for RabbitMQ connection."""
-    url: str
-    max_retries: int
-    retry_delay: int
-    heartbeat: int
-    connection_timeout: int
